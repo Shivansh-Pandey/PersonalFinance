@@ -1,0 +1,606 @@
+﻿
+@model PersonalFinance.Models.PersonalFinanceModel
+@{
+    ViewBag.Title = "Personal Finance";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<h2>
+    Student Info
+</h2>
+
+
+
+@using (Html.BeginForm("Save", "PersonalFinance", FormMethod.Post))
+{
+
+    <div>
+        <div class="input-group">
+            <label class="col-sm-3 col-form-label">Email</label>
+            @Html.TextBoxFor(c => c.PreviousEmail, new { @class = "form-control", @type = "email" })
+            @*<input type="email" id="email" class="form-control">*@
+        </div>
+        <div class="input-group">
+            <label class="col-sm-3 col-form-label">Password</label>
+            @*<input type="password" id="password" class="form-control">*@
+            @Html.TextBoxFor(c => c.PreviousPassword, new { @class = "form-control", @type = "password" })
+        </div>
+        <div class="input-group">
+            <button class="btn btn-success">Get Previous Info</button>
+        </div>
+    </div>
+    <br>
+    <div>
+        <div class="col gap-6">
+            <span class='fw-bold fs-2 border-bottom border-6'>Enter Paycheck Information</span>
+            <br><br>
+        </div>
+    </div>
+    <div class="d-grid gap-6 bg-light p-4">
+        <div>
+            <div class="input-group">
+                <label class="col-sm-4 col-form-label">Last Pay Date</label>
+                @Html.TextBoxFor(c => c.paycheckInformation.LastPayDate, new { @class = "form-control", @type = "text", @onchange = "update('401k')" })
+                @*<input type="text" name="LastPayDate" id="LastPayDate" onchange="update('401k')" class="form-control">*@
+            </div>
+        </div>
+        <div>
+            <div class="input-group">
+                <label class="col-sm-4 col-form-label">Pay Period</label>
+
+                @Html.DropDownListFor(c => c.paycheckInformation.PayPeriod, new SelectList((IEnumerable<SelectListItem>)ViewData["payperiod"], "Value", "Text"), new { @class = "form-control" });
+
+                @*@Html.DropDownListFor(c => c.paycheckInformation.PayPeriod, (IEnumerable<SelectListItem>)ViewData);*@
+
+                @*<select class="form-select" id="PayPeriod" onchange="update('401k'); update('income');">
+            <option selected value="biweekly">Bi-Weekly</option>
+            <option value="semimonthly">Semi-Monthly</option>
+        </select>*@
+            </div>
+        </div>
+        <div>
+            <div class="input-group">
+                <label class="col-sm-4 col-form-label">Gross Amount</label>
+                <span class="input-group-text">$</span>
+                @*<input type="number" name="GrossAmount" id="GrossAmount" step=".01" placeholder="0" onchange="update('401k')" class="form-control">*@
+                @Html.TextBoxFor(c => c.paycheckInformation.GrossAmount, new { @class = "form-control", @type = "number", @onchange = "update('401k')", @step = ".01", @placeholder = "0" })
+            </div>
+        </div>
+        <div>
+            <div class="input-group">
+                <label class="col-sm-4 col-form-label">Net Amount</label>
+                <span class="input-group-text">$</span>
+                <input type="number" name="NetAmount" id="NetAmount" step=".01" placeholder="0" onchange="update('401k'); update('income');" class="form-control">
+            </div>
+        </div>
+        <div>
+            <div class="input-group">
+                <label class="col-sm-4 col-form-label">Current 401k Contribution</label>
+                <span class="input-group-text">$</span>
+                <input type="number" name="Current401k" id="Current401k" step=".01" placeholder="0" onchange="update('401k')" class="form-control">
+            </div>
+        </div>
+        <div>
+            <div class="input-group">
+                <label class="col-sm-4 col-form-label">YTD 401k Contribution</label>
+                <span class="input-group-text">$</span>
+                <input type="number" name="YTD401k" id="YTD401k" step=".01" placeholder="0" onchange="update('401k')" class="form-control">
+            </div>
+        </div>
+        <div><br><hr></div>
+        <div>
+            <div class="form-check form-check-inline">
+                <label class="form-check-label">Does your employer offer 401k match?</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input type="radio" class="form-check-input" name="radio-employerMatch" id="employerMatchYes" value="yes" onchange="update('employerMatch')">
+                <label class="form-check-label" for="employerMatchYes">Yes</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input type="radio" class="form-check-input" name="radio-employerMatch" id="employerMatchNo" value="no" onchange="update('employerMatch')">
+                <label class="form-check-label" for="employerMatchNo">No</label>
+            </div>
+            <div class="container " id="employerMatchQ" hidden>
+                <div class="input-group">
+                    <label class="input-group-text">How much is the employer match?</label>
+                    <input type="number" name="employerMatchAmount" id="employerMatchAmount" step=".01" placeholder="0" class="form-control text-end" onchange="update('employerMatch')">
+                    <span class="input-group-text">%</span>
+                </div>
+            </div>
+        </div>
+        <div><hr></div>
+        <div>
+            <p></p>
+            <div class="fs-4 fw-bolder text-uppercase border-bottom">401K Summary</div>
+            <div id="401kSummary"></div>
+            <div id="paycheckLeft">Paychecks left for this year: 0</div>
+            <div id="401kContr">Currently contributing 0% per paycheck</div>
+            <div id="expected401k">Expected contribution: $0.00</div>
+        </div>
+    </div>
+    <div><br><br></div>
+    <div>
+        <div class="col gap-6">
+            <span class='fw-bold fs-2 border-bottom border-6'>Monthly Incomes</span>
+            <br><br>
+        </div>
+    </div>
+    <div class="d-grid gap-6 bg-light p-4">
+        <div id="incomes" class="d-grid gap-1">
+            <div class="input-group" id="div-income1">
+                <input type="text" value="Paycheck" class="form-control" disabled>
+                <span class="input-group-text">$</span>
+                <input type="number" name="income1" id="income1" step=".01" placeholder="0" onchange="update('income')" class="form-control" disabled>
+                <button name="delIncome1" type="button" class="btn btn-danger fw-bold" disabled>-</button>
+            </div>
+        </div>
+        <div>
+            <br>
+            <button class="btn btn-success" onclick="addFields('income')">Add Income</button>
+        </div>
+        <div>
+            <p></p>
+            <span class="fs-4 fw-bolder text-uppercase border-bottom">Total Income: </span><span class="fs-4 fw-bolder text-uppercase border-bottom" id="Totalincome">$0.00</span>
+        </div>
+    </div>
+    <div><br><br></div>
+    <div>
+        <div class="col gap-6">
+            <span class='fw-bold fs-2 border-bottom border-6'>Monthly Expenses</span>
+            <br><br>
+        </div>
+    </div>
+    <div class="d-grid gap-6 bg-light p-4">
+        <div id="expenses" class="d-grid gap-1">
+            <div class="input-group" id="div-expense1">
+                <input type="text" placeholder="Expense 1" class="form-control">
+                <span class="input-group-text">$</span>
+                <input type="number" name="expense1" id="expense1" step=".01" placeholder="0" onchange="update('expense')" class="form-control">
+                <button name="delExpense1" type="button" class="btn btn-danger fw-bold">-</button>
+            </div>
+        </div>
+        <div>
+            <br>
+            <button class="btn btn-success" onclick="addFields('expense')">Add Expense</button>
+        </div>
+        <div>
+            <p></p>
+            <span class="fs-4 fw-bolder text-uppercase border-bottom">Total Expense: </span><span class="fs-4 fw-bolder text-uppercase border-bottom" id="Totalexpense">$0.00</span>
+        </div>
+    </div>
+    <div><br><br></div>
+    <div>
+        <div class="col gap-6">
+            <span class='fw-bold fs-2 border-bottom border-6'>Assets</span>
+            <br><br>
+        </div>
+    </div>
+    <div class="d-grid gap-6 bg-light p-4">
+        <div id="assets" class="d-grid gap-1">
+            <div class="input-group" id="div-asset1">
+                <input type="text" placeholder="Asset 1" class="form-control">
+                <select class="form-select" id="assetType1" onchange="update('asset')">
+                    <option value="cash">Checking/Savings</option>
+                    <option value="taxable">Taxable Investment</option>
+                    <option value="retirement">Retirement (IRAs, 401ks, etc.)</option>
+                    <option value="realestate">Real Estate</option>
+                    <option value="other">Other</option>
+                </select>
+                <span class="input-group-text">$</span>
+                <input type="number" name="asset1" id="asset1" step=".01" placeholder="0" onchange="update('asset')" class="form-control">
+                <button name="delAsset1" type="button" class="btn btn-danger fw-bold">-</button>
+            </div>
+        </div>
+        <div>
+            <br>
+            <button class="btn btn-success" onclick="addFields('asset')">Add Asset</button>
+        </div>
+        <div>
+            <p></p>
+            <span class="fs-4 fw-bolder text-uppercase border-bottom">Total Asset: </span><span class="fs-4 fw-bolder text-uppercase border-bottom" id="Totalasset">$0.00</span>
+        </div>
+        <div class="row justify-content-start">
+            <div class="col-6">Total Cash:</div>
+            <div class="col-6" id="TotalCash">$0.00</div>
+        </div>
+        <div class="row justify-content-start">
+            <div class="col-6">Total Taxable:</div>
+            <div class="col-6" id="TotalTaxable">$0.00</div>
+        </div>
+        <div class="row justify-content-start">
+            <div class="col-6">Total Retirement:</div>
+            <div class="col-6" id="TotalRetirement">$0.00</div>
+        </div>
+        <div class="row justify-content-start">
+            <div class="col-6">Total Real Estate:</div>
+            <div class="col-6" id="TotalRealEstate">$0.00</div>
+        </div>
+        <div class="row justify-content-start">
+            <div class="col-6">Total Other:</div>
+            <div class="col-6" id="TotalOther">$0.00</div>
+        </div>
+
+    </div>
+    <div><br><br></div>
+    <div>
+        <div class="col gap-6">
+            <span class='fw-bold fs-2 border-bottom border-6'>Debts</span>
+            <br><br>
+        </div>
+    </div>
+    <div class="d-grid gap-6 bg-light p-4">
+        <div id="debts" class="d-grid gap-1">
+            <div class="input-group" id="div-debt1">
+                <input type="text" id="debtName1" placeholder="Debt 1" class="form-control">
+                <select class="form-select" id="debtType1" onchange="update('debt')">
+                    <option value="mortgage">Mortgage</option>
+                    <option value="creditcard">Credit Card</option>
+                    <option value="autoloan">Auto Loan</option>
+                    <option value="studentloan">Student Loan</option>
+                </select>
+                <span class="input-group-text">$</span>
+                <input type="number" name="debt1" id="debt1" step=".01" placeholder="0" onchange="update('debt')" class="form-control">
+                <input type="number" name="debtInterest1" id="debtInterest1" step=".01" placeholder="0" onchange="update('debt')" class="form-control text-end">
+                <span class="input-group-text">%</span>
+                <span class="input-group-text">Pay Off Monthly</span>
+                <select class="form-select" id="debtPay1" onchange="update('debt')" disabled>
+                    <option selected></option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </select>
+                <button name="delDebt1" type="button" class="btn btn-danger fw-bold">-</button>
+            </div>
+        </div>
+        <div>
+            <br>
+            <button class="btn btn-success" onclick="addFields('debt')">Add Debt</button>
+        </div>
+        <div>
+            <p></p>
+            <span class="fs-4 fw-bolder text-uppercase border-bottom">Total Debt: </span><span class="fs-4 fw-bolder text-uppercase border-bottom" id="Totaldebt">$0.00</span>
+        </div>
+        <div class="row justify-content-start">
+            <div class="col-6">Total Mortgage:</div>
+            <div class="col-6" id="TotalMortgage">$0.00</div>
+        </div>
+        <div class="row justify-content-start">
+            <div class="col-6">Total Credit Card:</div>
+            <div class="col-6" id="TotalCreditCard">$0.00</div>
+        </div>
+        <div class="row justify-content-start">
+            <div class="col-6">Total Auto Loan:</div>
+            <div class="col-6" id="TotalAutoLoan">$0.00</div>
+        </div>
+        <div class="row justify-content-start">
+            <div class="col-6">Total Student Loan:</div>
+            <div class="col-6" id="TotalStudentLoan">$0.00</div>
+        </div>
+    </div>
+
+    <div><br><br></div>
+    <div class="d-grid gap-6 bg-light p-4">
+        <label class="form-check-label fw-bold">Are you expecting any large, <i>required</i> purchases or personal investments in the near future? (college, professional certifications, car so you can get to work, etc.)</label>
+        <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name="radio-bigPurchase" id="bigPurchaseYes" value="yes" onchange="update('bigPurchase')">
+            <label class="form-check-label" for="bigPurchaseYes">Yes</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name="radio-bigPurchase" id="bigPurchaseNo" value="no" onchange="update('bigPurchase')">
+            <label class="form-check-label" for="bigPurchaseNo">No</label>
+        </div>
+        <div class="container" id="bigPurchaseQ" hidden>
+            <div class="input-group">
+                <label class="input-group-text">How much is the required amount?</label>
+                <span class="input-group-text">$</span>
+                <input type="number" name="bigPurchaseAmount" id="bigPurchaseAmount" step=".01" placeholder="0" class="form-control" onchange="update('bigPurchase')">
+            </div>
+        </div>
+        <br>
+        <label class="form-check-label fw-bold">Do you intend to contribute to other retirement funds like IRA, Roth IRA, SEP IRA, etc. ?</label>
+        <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name="radio-otherRetirement" id="otherRetirementYes" value="yes" onchange="update('otherRetirement')">
+            <label class="form-check-label" for="otherRetirementYes">Yes</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name="radio-otherRetirement" id="otherRetirementNo" value="no" onchange="update('otherRetirement')">
+            <label class="form-check-label" for="otherRetirementNo">No</label>
+        </div>
+        <div class="container" id="otherRetirementQ" hidden>
+            <div class="input-group">
+                <label class="input-group-text">How much will you contribute this year?</label>
+                <span class="input-group-text">$</span>
+                <input type="number" name="otherRetirementAmount" id="otherRetirementAmount" step=".01" placeholder="0" class="form-control" onchange="update('otherRetirement')">
+            </div>
+        </div>
+        <br>
+        <label class="form-check-label fw-bold">Do you have a qualified high-deductible health plan and are thus eligible for an investable HSA?</label>
+        <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name="radio-HSAEligible" id="HSAEligibleYes" value="yes" onchange="update('HSAEligible')">
+            <label class="form-check-label" for="HSAEligibleYes">Yes</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name="radio-HSAEligible" id="HSAEligibleNo" value="no" onchange="update('HSAEligible')">
+            <label class="form-check-label" for="HSAEligibleNo">No</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name="radio-HSAEligible" id="HSAEligibleDK" value="dontknow" onchange="update('HSAEligible')">
+            <label class="form-check-label" for="HSAEligibleDK">Don't Know</label>
+        </div>
+        <br>
+        <label class="form-check-label fw-bold">Do you have a children and wish to help pay for some or all of their college expenses?</label>
+        <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name="radio-collegeFund" id="collegeFundYes" value="yes" onchange="update('collegeFund')">
+            <label class="form-check-label" for="collegeFundYes">Yes</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name="radio-collegeFund" id="collegeFundNo" value="no" onchange="update('collegeFund')">
+            <label class="form-check-label" for="collegeFundNo">No</label>
+        </div>
+        <br>
+        <div class="input-group">
+            <label class="col-sm-3 col-form-label">Your birthday</label>
+            <input type="text" name="birthday" id="birthday" class="form-control">
+        </div>
+    </div>
+    <div><br><br></div>
+    <div class="d-grid gap-6 bg-light p-4">
+        <button class="btn btn-success" id="analyze">Analyze</button>
+    </div>
+    <div><br><br></div>
+    <div class="d-grid gap-6 bg-light p-4">
+        <div class="fs-4 fw-bolder text-uppercase border-bottom">Monthly Cashflow</div>
+        <div class="container">
+            <div class="row justify-content-start text-success">
+                <div class="col-6">Total Monthly Income:</div>
+                <div class="col-6" id="TotalMonthlyIncome">$0.00</div>
+            </div>
+            <div class="row justify-content-start text-danger">
+                <div class="col-6">Total Monthly Expense:</div>
+                <div class="col-6" id="TotalMonthlyExpense">$0.00</div>
+            </div>
+            <div class="row justify-content-start border-top fw-bolder">
+                <div class="col-6">Total Monthly Cashflow:</div>
+                <div class="col-6" id="TotalMonthlyCashflow">$0.00</div>
+            </div>
+        </div>
+    </div>
+    <div><br><br></div>
+    <div class="d-grid gap-6 bg-light p-4">
+        <div class="fs-4 fw-bolder text-uppercase border-bottom">Your Net Worth</div>
+        <div class="container">
+            <div class="row justify-content-start text-success">
+                <div class="col-6">Total Asset:</div>
+                <div class="col-6" id="TotalAsset">$0.00</div>
+            </div>
+            <div class="row justify-content-start text-danger">
+                <div class="col-6">Total Debt:</div>
+                <div class="col-6" id="TotalDebt">$0.00</div>
+            </div>
+            <div class="row justify-content-start border-top fw-bolder">
+                <div class="col-6">Total Net Worth:</div>
+                <div class="col-6" id="TotalNetWorth">$0.00</div>
+            </div>
+        </div>
+    </div>
+    <div><br><br></div>
+    <div class="d-grid gap-6 bg-light p-4">
+        <div class="fs-4 fw-bolder text-uppercase border-bottom">Recommended Actions</div>
+        <div class="container">
+            <div class="row justify-content-start">
+                <div class="" id="recommendedActions"></div>
+            </div>
+        </div>
+    </div>
+    <div><br><br></div>
+    <div class="d-grid gap-6 bg-light p-4">
+        <div class="fs-4 fw-bolder text-uppercase border-bottom">Good Stuff</div>
+        <div class="container">
+            <div class="row justify-content-start">
+                <div class="" id="goodActions"></div>
+            </div>
+        </div>
+    </div>
+
+    <table>
+        <tr>
+            <td>
+                Name
+            </td>
+            <td>
+                @Html.TextBoxFor(c => c.Email)
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Name
+            </td>
+            <td>
+                @Html.TextBoxFor(c => c.Password)
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <input type="submit" name="submit" value="Save" />
+            </td>
+        </tr>
+    </table>
+}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+@*<script src="~/Scripts/JS/index.js"></script>*@
+
+<script type="text/javascript">
+
+    const currency = { style: 'currency', currency: 'USD' };
+    let current401k = 0, employerMatchAmount = 0, expected401k = 0;
+    let cash = 0;
+    let TotalIncome = 0, TotalExpense = 0, TotalAsset = 0, TotalDebt = 0;
+    let matchEmployer401k = false;
+    var goodMessages = {}, recommendedActions = {};
+    var debtsOver10 = [], debtsOver4 = [];
+
+    $(document).ready(function () {
+        $(function () {
+            $("#paycheckInformation_LastPayDate").datepicker();
+           // $("#birthday").datepicker();
+        });
+
+        function update(item) {
+
+    switch (item) {
+
+        //UPDATE 401k
+        case "401k":
+            //COUNT NUMBER OF PAYCHECKS REMAINING FOR THE YEAR
+            var numPaychecks;
+            var payDate = new Date($('#paycheckInformation_LastPayDate').val());
+            var EOY = new Date(new Date().getFullYear(), 11, 31);
+
+            //PAY PERIOD IS BI-WEEKLY, CALCULATE BY REMAINDER WEEKS FOR THE YEAR
+            if ($('#PayPeriod').val() == 'biweekly') {
+                numPaychecks = Math.floor((EOY - payDate) / 1000 / 60 / 60 / 24 / 7 / 2);
+            }
+
+            //PAY PERIOD IS SEMI-MONTHLY, CALCULATE BY REMAINDER MONTHS FOR THE YEAR
+            else {
+                numPaychecks = (12 - (payDate.getMonth() + 1)) * 2;
+                if (payDate.getUTCDate() < 15) {
+                    numPaychecks += 1;
+                }
+            }
+
+            //UPDATE TOTAL INCOME
+            if (!isNaN(numPaychecks)) {
+                $('#paycheckLeft').text("Paychecks left for this year: " + numPaychecks);
+            }
+
+            //CALCULATE 401K CONTRIBUTION PERCENTAGE FOR EACH PAYCHECK
+            current401k = (parseFloat($('#Current401k').val()) / parseFloat($('#paycheckInformation_GrossAmount').val())) * 100;
+            current401k = isNaN(current401k) ? 0 : current401k;
+            $('#401kContr').text("Currently contributing " + current401k.toLocaleString('en-US', { maximumFractionDigits: 2 }) + "% per paycheck");
+
+            //CALCULATED EXPECTED TOTAL CONTRIBUTION FOR CURRENT YEAR
+            expected401k = parseFloat($('#Current401k').val()) * parseFloat(numPaychecks) + parseFloat($('#YTD401k').val());
+            expected401k = isNaN(expected401k) ? 0 : expected401k;
+            if (expected401k > 0) {
+                $('#expected401k').text("Expected " + payDate.getFullYear() + " contribution: " + expected401k.toLocaleString('en-US', currency));
+            }
+
+            if ($('#employerMatchAmount').val() != "") {
+                employerMatchAmount = $('#employerMatchAmount').val();
+            }
+            break;
+
+        //UPDATE INCOMES
+        case "income":
+
+            //SET PAYCHECK NET AMOUNT IN INCOME1
+            let monthlyPay = 0;
+            if ($('#NetAmount').val() > 0) {
+                if ($('#PayPeriod').val() == 'biweekly') {
+                    monthlyPay = parseFloat(($('#NetAmount').val() * 26) / 12);
+                }
+                else {
+                    monthlyPay = parseFloat($('#NetAmount').val()) * 2;
+                }
+
+                $('#income1').val(parseFloat(monthlyPay.toFixed(2)));
+            }
+            updateTotal(item);
+            break;
+
+        case "expense":
+            updateTotal(item);
+            break;
+
+        case "asset":
+            updateTotal(item);
+            break;
+
+        //UPDATE DEBT
+        case "debt":
+
+            //DISABLE PAY OFF MONTHLY SELECTOR IF DEBT IS NOT CREDIT CARD
+            $("select[id^='debtType']").each(function () {
+                i = $(this).attr('id').slice(-1);
+
+                if ($(this).val() == 'creditcard') {
+                    $('#debtPay' + i).removeAttr('disabled');
+                }
+                else {
+                    $('#debtPay' + i).attr('disabled', 'disabled');
+                    $('#debtPay' + i).val('');
+                }
+            });
+
+            //CHECK INTERESTS
+            debtsOver10 = [];
+            debtsOver4 = [];
+            $("input[id^='debtInterest']").each(function () {
+                i = $(this).attr('id').slice(-1);
+
+                if ($(this).val() >= 10) {
+                    if ($('#debtType' + i).val() == 'creditcard' && $('#debtPay' + i).val() == "no") {
+                        debtsOver10.push(i);
+                    }
+                    else if ($('#debtType' + i).val() != 'creditcard') {
+                        debtsOver10.push(i);
+                    }
+                }
+
+                if ($('#debtType' + i).val() != 'mortgage' && $(this).val() < 10 && $(this).val() >= 4) {
+                    if ($('#debtType' + i).val() == 'creditcard' && $('#debtPay' + i).val() == "no") {
+                        debtsOver4.push(i);
+                    }
+                    else if ($('#debtType' + i).val() != 'creditcard') {
+                        debtsOver4.push(i);
+                    }
+                }
+
+            });
+
+            updateTotal(item);
+            break;
+
+        case "employerMatch":
+            if ($('#employerMatchYes').is(':checked')) {
+                $('#employerMatchQ').removeAttr('hidden');
+
+            }
+            else {
+                $('#employerMatchAmount').val('');
+                $('#employerMatchQ').attr('hidden', 'hidden');
+            }
+            break;
+
+        case "bigPurchase":
+            if ($('#bigPurchaseYes').is(':checked')) {
+                $('#bigPurchaseQ').removeAttr('hidden');
+
+            }
+            else {
+                $('#bigPurchaseAmount').val('');
+                $('#bigPurchaseQ').attr('hidden', 'hidden');
+            }
+            break;
+
+        case "otherRetirement":
+            if ($('#otherRetirementYes').is(':checked')) {
+                $('#otherRetirementQ').removeAttr('hidden');
+
+            }
+            else {
+                $('#otherRetirementAmount').val('');
+                $('#otherRetirementQ').attr('hidden', 'hidden');
+            }
+            break;
+    }
+
+
+}
+    });
+</script>
+
